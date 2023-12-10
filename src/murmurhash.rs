@@ -39,36 +39,34 @@ where
 //     }
 // }
 
-// fn read_bytess<T>(source: &T, buf: &mut [u8]) -> Result<usize>
-// where
-//     T: Clone,
-// {
-//     let cloned = source.clone();
-//     let src_bytes: &[u8] = unsafe {
-//         std::slice::from_raw_parts(
-//             &cloned as *const T as *const u8,
-//             std::mem::size_of::<T>(),
-//         )
-//     };
+fn read_bytes<T>(source: &T, buf: &mut [u8]) -> Result<usize>
+where
+    T: Clone,
+{
+    let cloned = source.clone();
+    let src_bytes: &[u8] = unsafe {
+        std::slice::from_raw_parts(
+            &cloned as *const T as *const u8,
+            std::mem::size_of::<T>(),
+        )
+    };
 
-//     src_bytes
+    let mut offset = 0;
+    loop {
+        let remaining = buf.len() - offset;
+        if remaining == 0 {
+            return Ok(offset);
+        }
 
-//     let mut offset = 0;
-//     loop {
-//         let remaining = buf.len() - offset;
-//         if remaining == 0 {
-//             return Ok(offset);
-//         }
+        let copy_len = std::cmp::min(remaining, src_bytes.len());
+        buf[offset..offset + copy_len].copy_from_slice(&src_bytes[..copy_len]);
+        offset += copy_len;
 
-//         let copy_len = std::cmp::min(remaining, src_bytes.len());
-//         buf[offset..offset + copy_len].copy_from_slice(&src_bytes[..copy_len]);
-//         offset += copy_len;
-
-//         if copy_len < src_bytes.len() {
-//             return Ok(offset);
-//         }
-//     }
-// }
+        if copy_len < src_bytes.len() {
+            return Ok(offset);
+        }
+    }
+}
 
 pub fn murmur<T: Clone>(source: &mut T, seed: u32) -> Result<u128> {
     const C1: u64 = 0x87c3_7b91_1142_53d5;
