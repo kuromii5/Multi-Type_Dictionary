@@ -5,6 +5,7 @@ use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
 use std::io::{Result};
 use std::rc::Rc;
+use std::fmt::Display;
 
 #[derive(Debug)]
 enum HashType {
@@ -13,18 +14,22 @@ enum HashType {
     
 }
 
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+enum Key {
+    Int(i32),
+    String(&'static str),
+    Bool(bool),
+    Tuple((Rc<Key>, Rc<Key>)),
+}
 
 #[derive(Debug)]
-struct HashTable<K, V> {
-    buckets: Vec<LinkedList<(K, V)>>,
+struct HashTable {
+    buckets: Vec<LinkedList<(Key, Rc<dyn Any>)>>,
     size: usize,
     hashtype: HashType,
 }
 
-impl<K, V> HashTable<K, V>
-where
-    K: Hash + Clone + PartialEq,
-    V: Clone + PartialEq,
+impl HashTable
 {
     fn new(size: usize, hashtype: HashType) -> Self {
         HashTable {
@@ -34,7 +39,7 @@ where
         }
     }
 
-    fn hash(&self, key: &K) -> Result<usize> {
+    fn hash(&self, key: &Key) -> Result<usize> {
         match self.hashtype {
             HashType::Default => {
                 let mut hasher = DefaultHasher::new();
@@ -48,7 +53,7 @@ where
         }
     }
 
-    fn insert(&mut self, key: K, value: V) -> () {
+    fn insert(&mut self, key: Key, value: Rc<dyn Any>) {
         let hash = self.hash(&key).unwrap();
 
         for (bucket_key, bucket_value) in &mut self.buckets[hash] {
@@ -61,7 +66,7 @@ where
         self.buckets[hash].push_front((key, value));
     }
 
-    fn look_up(&self, key: &K) -> Option<&V> {
+    fn look_up(&self, key: &Key) -> Option<&Rc<dyn Any>> {
         let hash = self.hash(key).unwrap();
 
         for (bucket_key, bucket_value) in &self.buckets[hash] {
@@ -73,9 +78,9 @@ where
         None
     }
 
-    fn remove(&mut self, key: &K) {
+    fn remove(&mut self, key: &Key) {
         let hash = self.hash(key).unwrap();
-        let mut new_list: LinkedList<(K, V)> = LinkedList::new();
+        let mut new_list: LinkedList<(Key, Rc<dyn Any + 'static>)> = LinkedList::new();
         while let Some((existing_key, existing_value)) = self.buckets[hash].pop_front() {
             if *key == existing_key {
                 continue;
@@ -93,8 +98,8 @@ where
         }
     }
 
-    fn items(&self) -> Vec<&(K, V)> {
-        let mut vec: Vec<&(K, V)> = Vec::new();
+    fn items(&self) -> Vec<&(Key, Rc<dyn Any + 'static>)> {
+        let mut vec: Vec<&(Key, Rc<dyn Any + 'static>)> = Vec::new();
         for list in &self.buckets {
             for item in list {
                 vec.push(item);
@@ -114,25 +119,21 @@ where
 }
 
 fn main() {
-    let mut t: HashTable<String, String> = HashTable::new(5, HashType::Default);
-    t.insert(String::from("key1"), String::from("42"));
-    t.insert(String::from("key2"), "99".into());
-    t.insert(String::from("key1"), String::from("48"));
-    t.insert(String::from("key3"), String::from("48"));
-    t.insert(String::from("key4"), String::from("48"));
-    t.insert(String::from("key5"), String::from("48"));
-    t.insert(String::from("key6"), String::from("48"));
-    println!("{:?}", t);
-    println!("{}", t.length());
-    println!("{:?}", t.look_up(&"key2".to_string()));
-
-    t.remove(&"key2".to_string());
+    let mut t: HashTable = HashTable::new(5, HashType::Default);
+    t.insert(Key::Int(56), Rc::new(128));
+    t.insert(Key::String("Easy"), Rc::new("string"));
 
     println!("{:?}", t);
-    println!("{:?}", t.items());
 
-    t.clear();
+    t.remove(&Key::Int(56));
+    t.insert(
+        Key::Tuple(
+            (Rc::new(Key::Tuple((Rc::new(Key::Bool(true)), Rc::new(Key::String("amogus"))))),
+             Rc::new(Key::Int(68))
+            )
+        ),
+        Rc::new(56.23)
+    );
 
     println!("{:?}", t);
-    println!("{:?}", t.items());
 }
