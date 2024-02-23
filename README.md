@@ -1,9 +1,10 @@
-# Static Dictionary with multiple key and value types on Rust #
+# Static Closed-Addressing Dictionary with multiple key and value types on Rust #
 
 ## About this project ##
 
 This is part of my pure interest in Algorithms course. I've decided to create a dictionary with multiple types of keys and values on Rust. I did it, but encountered some problems, which couldn't resolve.
 So this implementation is not very good example to use in your projects. This is not convenient and *possibly* broken.
+This is Closed-Addressing dictionary, so the buckets are Linked Lists.
 
 ## Dictionary methods and types ##
 
