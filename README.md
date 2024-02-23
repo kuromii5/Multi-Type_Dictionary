@@ -1,4 +1,4 @@
-# Static Closed-Addressing Dictionary with multiple key and value types on Rust #
+# Static Closed-Addressing Dictionary based on HashTable with multiple K:V types on Rust #
 
 ## About this project ##
 
